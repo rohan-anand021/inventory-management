@@ -106,7 +106,7 @@ export default {
       { path: '/orders', label: t('nav.orders'), icon: ICONS.orders },
       { path: '/spending', label: t('nav.finance'), icon: ICONS.finance },
       { path: '/demand', label: t('nav.demandForecast'), icon: ICONS.demand },
-      { path: '/reports', label: 'Reports', icon: ICONS.reports }
+      { path: '/reports', label: t('nav.reports'), icon: ICONS.reports }
     ])
 
     // Merge mock tasks from currentUser with API tasks
@@ -341,6 +341,7 @@ body {
 
 .content-area {
   flex: 1;
+  min-width: 0;
   margin-left: 240px;
   display: flex;
   flex-direction: column;
@@ -437,7 +438,7 @@ body {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.25rem;
   margin-bottom: 1.5rem;
 }
