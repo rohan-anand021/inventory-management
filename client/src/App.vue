@@ -1,42 +1,48 @@
 <template>
-  <div class="app">
-    <header class="top-nav">
-      <div class="nav-container">
-        <div class="logo">
+  <div class="app" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">
           <h1>{{ t('nav.companyName') }}</h1>
           <span class="subtitle">{{ t('nav.subtitle') }}</span>
         </div>
-        <nav class="nav-tabs">
-          <router-link to="/" :class="{ active: $route.path === '/' }">
-            {{ t('nav.overview') }}
-          </router-link>
-          <router-link to="/inventory" :class="{ active: $route.path === '/inventory' }">
-            {{ t('nav.inventory') }}
-          </router-link>
-          <router-link to="/orders" :class="{ active: $route.path === '/orders' }">
-            {{ t('nav.orders') }}
-          </router-link>
-          <router-link to="/spending" :class="{ active: $route.path === '/spending' }">
-            {{ t('nav.finance') }}
-          </router-link>
-          <router-link to="/demand" :class="{ active: $route.path === '/demand' }">
-            {{ t('nav.demandForecast') }}
-          </router-link>
-          <router-link to="/reports" :class="{ active: $route.path === '/reports' }">
-            Reports
-          </router-link>
-        </nav>
+        <button
+          class="sidebar-toggle"
+          type="button"
+          @click="sidebarCollapsed = !sidebarCollapsed"
+          :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        >
+          <span class="toggle-icon" :class="{ flipped: sidebarCollapsed }" v-html="ICONS.toggle"></span>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link
+          v-for="item in navItems"
+          :key="item.path"
+          :to="item.path"
+          :class="{ active: $route.path === item.path }"
+          :title="item.label"
+        >
+          <span class="nav-icon" v-html="item.icon"></span>
+          <span class="nav-label">{{ item.label }}</span>
+        </router-link>
+      </nav>
+    </aside>
+
+    <div class="content-area">
+      <header class="top-bar">
         <LanguageSwitcher />
         <ProfileMenu
           @show-profile-details="showProfileDetails = true"
           @show-tasks="showTasks = true"
         />
-      </div>
-    </header>
-    <FilterBar />
-    <main class="main-content">
-      <router-view />
-    </main>
+      </header>
+      <FilterBar />
+      <main class="main-content">
+        <router-view />
+      </main>
+    </div>
 
     <ProfileDetailsModal
       :is-open="showProfileDetails"
@@ -65,6 +71,18 @@ import ProfileDetailsModal from './components/ProfileDetailsModal.vue'
 import TasksModal from './components/TasksModal.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
 
+const ICON_PROPS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"'
+
+const ICONS = {
+  overview: `<svg ${ICON_PROPS}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+  inventory: `<svg ${ICON_PROPS}><path d="M21 7.5l-9-4.5-9 4.5 9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/></svg>`,
+  orders: `<svg ${ICON_PROPS}><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.5h6V4"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>`,
+  finance: `<svg ${ICON_PROPS}><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.4-5 1.1-5 3.5 0 1.1 1.1 1.9 2.5 1.9s2.5-.9 2.5-2"/></svg>`,
+  demand: `<svg ${ICON_PROPS}><path d="M3 17l6-6 4 4 8-8"/><path d="M15 6h6v6"/></svg>`,
+  reports: `<svg ${ICON_PROPS}><path d="M4 20V10M11 20V4M18 20v-7"/></svg>`,
+  toggle: `<svg ${ICON_PROPS}><path d="M15 18l-6-6 6-6"/></svg>`
+}
+
 export default {
   name: 'App',
   components: {
@@ -80,6 +98,16 @@ export default {
     const showProfileDetails = ref(false)
     const showTasks = ref(false)
     const apiTasks = ref([])
+    const sidebarCollapsed = ref(false)
+
+    const navItems = computed(() => [
+      { path: '/', label: t('nav.overview'), icon: ICONS.overview },
+      { path: '/inventory', label: t('nav.inventory'), icon: ICONS.inventory },
+      { path: '/orders', label: t('nav.orders'), icon: ICONS.orders },
+      { path: '/spending', label: t('nav.finance'), icon: ICONS.finance },
+      { path: '/demand', label: t('nav.demandForecast'), icon: ICONS.demand },
+      { path: '/reports', label: 'Reports', icon: ICONS.reports }
+    ])
 
     // Merge mock tasks from currentUser with API tasks
     const tasks = computed(() => {
@@ -150,8 +178,11 @@ export default {
 
     return {
       t,
+      navItems,
       showProfileDetails,
       showTasks,
+      sidebarCollapsed,
+      ICONS,
       tasks,
       addTask,
       deleteTask,
@@ -178,92 +209,205 @@ body {
 
 .app {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
 }
 
-.top-nav {
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+  transition: width 0.2s ease;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-logo-text {
+  overflow: hidden;
+}
+
+.sidebar-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.toggle-icon {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.toggle-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.toggle-icon.flipped {
+  transform: rotate(180deg);
+}
+
+.sidebar-logo h1 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.25rem;
+}
+
+.sidebar-logo .subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav a:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-nav a.active {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nav-label {
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.content-area {
+  flex: 1;
+  margin-left: 240px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.2s ease;
+}
+
+/* Collapsible sidebar: manual toggle via .sidebar-collapsed on .app */
+.app.sidebar-collapsed .sidebar {
+  width: 72px;
+}
+
+.app.sidebar-collapsed .content-area {
+  margin-left: 72px;
+}
+
+.app.sidebar-collapsed .sidebar-logo {
+  justify-content: center;
+}
+
+.app.sidebar-collapsed .sidebar-logo-text,
+.app.sidebar-collapsed .nav-label {
+  display: none;
+}
+
+.app.sidebar-collapsed .sidebar-nav a {
+  justify-content: center;
+}
+
+/* Icons-only mode on smaller screens, independent of the manual toggle above */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 72px;
+  }
+
+  .content-area {
+    margin-left: 72px;
+  }
+
+  .sidebar-logo-text,
+  .sidebar-toggle,
+  .nav-label {
+    display: none;
+  }
+
+  .sidebar-logo {
+    justify-content: center;
+  }
+
+  .sidebar-nav a {
+    justify-content: center;
+  }
+}
+
+.top-bar {
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
-  z-index: 100;
-}
-
-.nav-container {
-  max-width: 1600px;
-  margin: 0 auto;
+  z-index: 90;
+  height: 64px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
   padding: 0 2rem;
-  height: 70px;
-}
-
-.nav-container > .nav-tabs {
-  margin-left: auto;
-  margin-right: 1rem;
-}
-
-.nav-container > .language-switcher {
-  margin-right: 1rem;
-}
-
-.logo {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-}
-
-.logo h1 {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.025em;
-}
-
-.subtitle {
-  font-size: 0.813rem;
-  color: #64748b;
-  font-weight: 400;
-  padding-left: 0.75rem;
-  border-left: 1px solid #e2e8f0;
-}
-
-.nav-tabs {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.nav-tabs a {
-  padding: 0.625rem 1.25rem;
-  color: #64748b;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.938rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.nav-tabs a:hover {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-
-.nav-tabs a.active {
-  color: #2563eb;
-  background: #eff6ff;
-}
-
-.nav-tabs a.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #2563eb;
 }
 
 .main-content {
